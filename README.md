@@ -1,48 +1,43 @@
 # multi-tenant-kit
 
-[![PyPI version](https://img.shields.io/pypi/v/trysac-multi-tenant-kit)](https://pypi.org/project/trysac-multi-tenant-kit/)
-[![License: MIT](https://img.shields.io/pypi/l/trysac-multi-tenant-kit)](LICENSE)
-[![CI](https://github.com/Trysac/u144-multi-tenant-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/Trysac/u144-multi-tenant-kit/actions/workflows/ci.yml)
+Row-level multi-tenancy helpers: contextvar tenant scope, exact Postgres RLS policy SQL, transaction-local tenant binding and a WSGI tenant middleware.
 
-Row-level multi-tenancy helpers: contextvar tenant scope, exact Postgres RLS policy SQL, transaction-local tenant binding and a WSGI tenant middleware
+## The Problem
 
-## Problem
+Multi-tenant SaaS applications often filter every query by `tenant_id` manually. One forgotten `WHERE` clause can cause catastrophic data leakage. While PostgreSQL Row-Level Security (RLS) can enforce isolation at the engine level, it requires precise wiring of the database policy, per-transaction session configuration, and the web request lifecycle.
 
-Describe in two or three sentences the concrete problem this utility solves, who hits it, and what
-they do today without it. Replace this paragraph when the first real feature lands.
+## Installation
 
-## Install
-
-```sh
+```bash
 pip install trysac-multi-tenant-kit
-# or
-uv add trysac-multi-tenant-kit
 ```
 
-Requires Python 3.10 or newer. No runtime dependencies.
-
-## Usage
+## Usage Example
 
 ```python
-import multi_tenant_kit
+from multi_tenant_kit import current_tenant, rls_policy_sql, tenant_scope
 
-# normalize() trims surrounding whitespace and lower-cases the text.
-print(multi_tenant_kit.normalize("  Hello World "))  # -> "hello world"
+sql = rls_policy_sql("orders")
+print(sql.splitlines()[0])
 
-# Blank input is rejected explicitly instead of returning an empty string.
-try:
-    multi_tenant_kit.normalize("   ")
-except ValueError as exc:
-    print(f"rejected: {exc}")
+with tenant_scope("tenant-123"):
+    active = current_tenant()
+    print(f"Active tenant: {active}")
 ```
 
-## Documentation
+## API Summary
 
-- [Architecture](docs/ARCHITECTURE.md) and [decisions](docs/decisions/)
-- [Testing](docs/TESTING.md) and [security](docs/SECURITY.md)
-- [Project record](docs/PROJECT.md) and [stack](docs/STACK.md)
-- [Changelog](CHANGELOG.md) and [contributing guide](CONTRIBUTING.md)
+- `current_tenant() -> str`: Returns active tenant ID (raises `TenantError('no_tenant')` if unbound).
+- `tenant_scope(tenant_id: str) -> AbstractContextManager[None]`: Context manager for `ContextVar` scoping. Raises `TenantError` on invalid formats or nested tenant switches.
+- `rls_policy_sql(table: str, *, column: str = "tenant_id", setting: str = "app.tenant_id") -> str`: Generates strict RLS policy DDL.
+- `bind_tenant(cursor: Any, *, setting: str = "app.tenant_id") -> None`: Executes `set_config(setting, tenant, true)` on a DB-API cursor.
+- `TenantMiddleware(app, *, resolve: Callable[[str], bool], ...)`: WSGI middleware enforcing tenant resolution.
+- `TenantError`: Exception with code `no_tenant`, `tenant_switch`, `invalid_tenant`, or `invalid_identifier`.
 
-## License
+## Why not <best-known alternative>?
 
-[MIT](LICENSE) (c) 2026 Miguel Gomez
+Unlike frameworks like `django-tenants` that impose specific ORM or schema architectures, this kit provides a lightweight, framework-agnostic set of primitives for implementing database-enforced row-level isolation in any standard Python/Postgres stack.
+
+## Security
+
+See [docs/SECURITY.md](docs/SECURITY.md) for the threat model and boundaries.

@@ -1,20 +1,12 @@
-# Testing
+# Testing Strategy
 
-## Running
+Tests are located in `tests/test_multi_tenant_kit.py` and cover all exported functionality and acceptance criteria.
 
-```sh
-uv run pytest --cov=multi_tenant_kit   # tests with coverage report
-uv run python scripts/check.py      # every gate, as CI and the factory run it
-```
+## Coverage Areas
 
-## Policy
-
-- Branch coverage of `src/multi_tenant_kit` must stay at or above 80 %; the gate fails below it.
-- Tests exercise the public API (`import multi_tenant_kit`) and assert every observable effect:
-  return values, raised exceptions and their messages.
-- Each bug fix starts with a failing test that reproduces it.
-- Tests are deterministic: no network, no wall clock, no dependence on test order.
-
-## Layout
-
-`tests/test_<module>.py` mirrors each public module. Shared fixtures go in `tests/conftest.py`.
+- **Context Scoping & Nesting**: Validates `current_tenant()` behavior, permits same-tenant nesting, rejects cross-tenant nesting with `tenant_switch`, and ensures scope reset on exception.
+- **Concurrency**: Verifies strict `ContextVar` isolation using `asyncio.gather` and `ThreadPoolExecutor`.
+- **PostgreSQL DDL**: Verifies `rls_policy_sql` output structure and character-exactness.
+- **Validation**: Ensures invalid identifiers (tables, tenants) correctly trigger `TenantError`.
+- **Database Binding**: Uses a recording fake cursor to ensure `bind_tenant` executes the correct SQL with correct transaction-local settings.
+- **WSGI Middleware**: Verifies status codes (400, 403) for missing/invalid/unknown tenants, and ensures the app executes inside the correct tenant scope.

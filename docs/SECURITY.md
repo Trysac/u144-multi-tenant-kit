@@ -1,19 +1,14 @@
-# Security notes
+# Security Model
 
-## Threat model
+## Threat Model
 
-`trysac-multi-tenant-kit` is a pure library without I/O. The main risks are:
+### Defended
+- **Data Leakage**: Queries that inadvertently omit tenant filters return zero rows (fail-closed) rather than data from other tenants, provided the connection is not a superuser.
+- **Invalid Requests**: HTTP requests lacking a valid, resolved tenant are blocked by middleware with `400` or `403` status codes.
+- **Context Leakage**: `ContextVars` prevent tenant identifier bleeding across concurrent `asyncio` tasks and OS threads.
 
-- **Supply chain**: a compromised dependency or CI action. Mitigation: no runtime dependencies,
-  Dependabot weekly updates, actions pinned to major versions, minimal workflow permissions.
-- **Leaked secrets**: tokens committed by mistake. Mitigation: `gitleaks` runs in the local gates
-  and in CI; `.env` files are git-ignored.
-- **Untrusted input**: callers may pass hostile strings. Mitigation: validate input and fail with
-  explicit exceptions; never `eval`, `exec` or deserialize untrusted data.
-
-## Publishing
-
-Releases are published to PyPI with trusted publishing (OIDC) when available, never with a
-long-lived token stored in the repository.
-
-To report a vulnerability, see [SECURITY.md](../SECURITY.md).
+### Not Defended
+- **Superusers**: Roles with `BYPASSRLS` permission or superuser status bypass all RLS policies.
+- **Session Mismanagement**: Database connections that fail to execute `bind_tenant` after `BEGIN` in a pooled session.
+- **Blind Trust**: Middleware resolve functions that trust client-supplied headers without external authentication.
+- **SQL Injection**: General SQL injection vulnerabilities outside the scope of the library's identifier sanitization.
