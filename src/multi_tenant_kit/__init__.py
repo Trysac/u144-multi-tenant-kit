@@ -23,8 +23,10 @@ import re
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import AbstractContextManager
 from types import TracebackType
-from typing import Any, Literal
-from wsgiref.types import StartResponse, WSGIApplication, WSGIEnvironment
+from typing import TYPE_CHECKING, Any, Literal
+
+if TYPE_CHECKING:  # wsgiref.types needs Python 3.11; typeshed has the same types for 3.10
+    from _typeshed.wsgi import StartResponse, WSGIApplication, WSGIEnvironment
 
 __all__ = [
     "TenantError",
