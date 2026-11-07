@@ -9,4 +9,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Add multi-tenant-kit with contextvar tenant scope, Postgres RLS policy generator, transaction-local tenant binding, and WSGI middleware.
 - Initial project structure from the factory utility template.

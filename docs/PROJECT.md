@@ -1,26 +1,33 @@
-# Project record
+# Project Record
 
 ## Objective
 
-Row-level multi-tenancy helpers: contextvar tenant scope, exact Postgres RLS policy SQL, transaction-local tenant binding and a WSGI tenant middleware
+To provide robust, fail-closed row-level multi-tenancy primitives for PostgreSQL and Python applications, preventing data leakage caused by missing `WHERE` clauses.
 
 ## Scope
 
-- In scope: the public API documented in [README.md](../README.md), typed and tested.
-- Out of scope: anything that needs runtime dependencies or I/O without an accepted ADR.
+- Async-safe, `ContextVar`-based tenant scoping.
+- PostgreSQL Row-Level Security policy DDL generator.
+- Transaction-local `set_config` binding for database connections.
+- Validating WSGI tenant middleware.
 
-## Timeline
+## Out of Scope
 
-| Date | Event |
-|---|---|
-| 2026 | Repository created from the factory utility template. |
+- ASGI support.
+- ORM-specific integrations (e.g., SQLAlchemy/Django models).
+- Architecture alternatives like schema-per-tenant or database-per-tenant.
+- Automated database migration runners.
+- A live PostgreSQL instance in the test suite.
 
-## Effort metrics
+## Factory run u144 (measured from API usage)
 
-Measured values only; a value that has not been measured stays "pending measurement".
+| Phase | Model | Batch | Input | Output | Cache write | Cache read | Cost (USD) |
+|---|---|---|---|---|---|---|---|
+| generation | gemini-3.8-flash | yes | 4205 | 38456 | 0 | 0 | 0.0737 |
+| fix-1 | gemini-3.8-flash | no | 37464 | 478 | 0 | 131632 | 0.0398 |
+| fix-2 | gemini-3.8-flash | no | 28167 | 271 | 0 | 69031 | 0.0273 |
+| fix-3 | gemini-3.8-flash | no | 14702 | 784 | 0 | 15742 | 0.0151 |
+| audit | gemini-3.1-flash-lite | no | 36753 | 394 | 0 | 71279 | 0.0116 |
+| docs | gemini-3.1-flash-lite | no | 188518 | 1293 | 0 | 0 | 0.0491 |
 
-| Metric | Value |
-|---|---|
-| Tokens (input / output) | pending measurement |
-| Hours (human) | pending measurement |
-| Cost (USD) | pending measurement |
+Total: $0.2165. Prices: Anthropic list prices.
