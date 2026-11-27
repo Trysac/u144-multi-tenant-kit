@@ -8,8 +8,10 @@ Multi-tenant SaaS applications often filter every query by `tenant_id` manually.
 
 ## Installation
 
+Not published to PyPI yet. Install it from GitHub:
+
 ```bash
-pip install trysac-multi-tenant-kit
+pip install "git+https://github.com/Trysac/u144-multi-tenant-kit"
 ```
 
 ## Usage Example
